@@ -1,0 +1,180 @@
+/* --- Global Styles & Variables --- */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --text-color: #343a40;
+    --border-color: #dee2e6;
+    --font-family: 'Roboto', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* --- Header & Footer --- */
+header {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 2rem 1rem;
+    position: relative;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+}
+
+footer {
+    text-align: center;
+    padding: 1rem;
+    margin-top: 2rem;
+    background-color: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.back-link {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.2s ease;
+}
+
+.back-link:hover {
+    transform: translateX(-5px);
+}
+
+
+/* --- Homepage Choice Cards --- */
+.home-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    text-align: center;
+}
+
+.choice-wrapper {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    justify-content: center;
+}
+
+.choice-card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    width: 350px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.choice-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* --- Prediction Forms --- */
+.form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2.5rem;
+    background: var(--surface-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group input, .form-group select {
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.btn-predict {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 2rem;
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-predict:hover {
+    background-color: #0056b3;
+}
+
+/* --- Result Box --- */
+.result-box {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #e9f5ff;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 4px;
+}
+
+.result-box h3 {
+    margin-bottom: 0.5rem;
+}
+
+#result-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .choice-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+    .grid-form {
+        grid-template-columns: 1fr;
+    }
+}

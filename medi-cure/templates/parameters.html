@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict by Medical Parameters</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <a href="/" class="back-link">&larr; Back to Home</a>
+        <h1>Medical Parameter Prediction</h1>
+    </header>
+    <main>
+        <div class="form-container">
+            <form id="parameter-form">
+                <div class="grid-form">
+                    <script>
+                        const fields = ['Age', 'BloodPressure', 'Cholesterol', 'MaxHeartRate', 'Glucose', 'BMI', 'Albumin', 'Bilirubin', 'Alamine_ALT', 'Copper', 'Stage', 'SpecificGravity', 'Hemoglobin'];
+                        fields.forEach(field => {
+                            document.write(`
+                                <div class="form-group">
+                                    <label for="${field.toLowerCase()}">${field.replace(/_/g, ' ')}:</label>
+                                    <input type="number" step="any" id="${field.toLowerCase()}" name="${field.toLowerCase()}" placeholder="e.g., ${field === 'Age' ? '55' : '120.5'}" required>
+                                </div>
+                            `);
+                        });
+                    </script>
+                    <div class="form-group">
+                        <label for="sex">Sex:</label>
+                        <select id="sex" name="sex" required>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-predict">Predict Disease</button>
+            </form>
+            <div id="result-container" class="result-box" style="display: none;">
+                <h3>Prediction Result:</h3>
+                <p id="result-text"></p>
+            </div>
+        </div>
+    </main>
+     <footer>
+        <p>&copy; 2025 Health AI Services.</p>
+    </footer>
+
+    <script>
+        document.getElementById('parameter-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch('/predict_parameters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const resultContainer = document.getElementById('result-container');
+            const resultText = document.getElementById('result-text');
+
+            if (result.predicted_disease) {
+                resultText.textContent = `The predicted disease is: ${result.predicted_disease}`;
+            } else {
+                resultText.textContent = `Error: ${result.error || 'An unknown error occurred.'}`;
+            }
+            resultContainer.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

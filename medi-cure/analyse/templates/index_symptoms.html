@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Checker AI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #f7f8fc; margin: 0; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 900px; margin: 40px auto; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        p { text-align: center; color: #555; margin-bottom: 30px; }
+        .symptoms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px;}
+        .symptom-item { display: flex; align-items: center; background: #f1f3f6; padding: 10px; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
+        .symptom-item input { margin-right: 10px; }
+        .symptom-item label { flex-grow: 1; cursor: pointer; text-transform: capitalize; }
+        button { display: block; width: 50%; margin: 0 auto; padding: 15px; background-color: #3498db; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
+        #result { margin-top: 30px; text-align: center; padding: 20px; border-radius: 8px; background-color: #eaf6ff; border: 1px solid #c1dff0; display: none; }
+        #predictionText { font-weight: 600; font-size: 1.2em; color: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Symptom Checker AI</h1>
+        <p>Select the symptoms you are experiencing to get a possible diagnosis.</p>
+        <form id="predictionForm">
+            <div class="symptoms-grid">
+                {% for symptom in symptoms %}
+                <div class="symptom-item">
+                    <input type="checkbox" id="{{ symptom }}" name="symptoms" value="{{ symptom }}">
+                    <label for="{{ symptom }}">{{ symptom.replace('_', ' ') }}</label>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="submit">Predict Disease</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const checkedBoxes = document.querySelectorAll('input[name="symptoms"]:checked');
+            const selectedSymptoms = Array.from(checkedBoxes).map(cb => cb.value);
+            const resultDiv = document.getElementById('result');
+
+            if (selectedSymptoms.length === 0) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = 'Please select at least one symptom.';
+                return;
+            }
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symptoms: selectedSymptoms }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.style.display = 'block';
+                if (data.predicted_disease) {
+                    resultDiv.innerHTML = `Possible Condition: <div id="predictionText">${data.predicted_disease}</div>`;
+                } else {
+                    resultDiv.innerHTML = `Error: <div id="predictionText">${data.error}</div>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
