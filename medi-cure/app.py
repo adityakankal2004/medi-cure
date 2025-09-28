@@ -78,7 +78,26 @@ def get_symptoms():
     """Provides the list of symptoms to the frontend."""
     if not symptom_columns:
         return jsonify({'error': 'Symptoms list not available.'}), 500
-    return jsonify(symptoms=symptom_columns)
+    
+    # Clean and format symptoms for better display
+    formatted_symptoms = []
+    for symptom in symptom_columns:
+        # Convert underscores to spaces and capitalize words
+        formatted_name = symptom.replace('_', ' ').title()
+        # Handle special cases
+        formatted_name = formatted_name.replace('Alt', 'ALT')
+        formatted_name = formatted_name.replace('Bmi', 'BMI')
+        formatted_name = formatted_name.replace('Url', 'URL')
+        
+        formatted_symptoms.append({
+            'value': symptom,
+            'display': formatted_name
+        })
+    
+    # Sort symptoms alphabetically by display name
+    formatted_symptoms.sort(key=lambda x: x['display'])
+    
+    return jsonify(symptoms=formatted_symptoms)
 
 # --- 3. Define Prediction API Endpoints ---
 

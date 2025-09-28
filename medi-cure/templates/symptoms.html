@@ -4,59 +4,173 @@
     <meta charset="UTF-8">
     <title>Symptom Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <a href="/" class="back-link">&larr; Back to Home</a>
-        <h1>Symptom-Based Prediction</h1>
+        <h1>Symptom-Based Disease Prediction</h1>
+        <p class="header-subtitle">Select your symptoms to get a disease prediction</p>
     </header>
     <main>
         <div class="form-container">
+            <div class="symptoms-header">
+                <h2>Select Your Symptoms</h2>
+                <div class="search-container">
+                    <input type="text" id="symptom-search" placeholder="Search symptoms..." class="search-input">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="symptoms-stats">
+                    <span id="selected-count">0</span> symptoms selected
+                </div>
+            </div>
+            
             <form id="symptom-form">
-                <label for="symptoms-select">Select Your Symptoms (Ctrl+Click for multiple):</label>
-                <select id="symptoms-select" multiple required></select>
-                <button type="submit" class="btn-predict">Predict Disease</button>
+                <div class="symptoms-grid" id="symptoms-grid">
+                    <!-- Symptoms will be loaded here -->
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="clear-all" class="btn-secondary">Clear All</button>
+                    <button type="submit" class="btn-predict" disabled>Predict Disease</button>
+                </div>
             </form>
+            
             <div id="result-container" class="result-box" style="display: none;">
-                <h3>Prediction:</h3>
-                <p id="result-text"></p>
+                <h3>Prediction Result</h3>
+                <div class="result-content">
+                    <div class="disease-icon">🏥</div>
+                    <p id="result-text"></p>
+                </div>
+                <button type="button" id="new-prediction" class="btn-secondary">New Prediction</button>
             </div>
         </div>
     </main>
+    
     <script>
+        let allSymptoms = [];
+        let selectedSymptoms = new Set();
+
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('/get_symptoms');
                 const data = await response.json();
-                const selectElement = document.getElementById('symptoms-select');
-                if (selectElement && data.symptoms) {
-                    data.symptoms.forEach(symptom => {
-                        const option = document.createElement('option');
-                        option.value = symptom;
-                        option.textContent = symptom.replace(/_/g, ' ');
-                        selectElement.appendChild(option);
-                    });
+                if (data.symptoms) {
+                    allSymptoms = data.symptoms;
+                    renderSymptoms(data.symptoms);
+                    setupEventListeners();
                 }
             } catch (error) {
                 console.error('Error fetching symptoms:', error);
+                document.getElementById('symptoms-grid').innerHTML = 
+                    '<div class="error-message">Error loading symptoms. Please refresh the page.</div>';
             }
         });
 
-        document.getElementById('symptom-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const selectedOptions = document.getElementById('symptoms-select').selectedOptions;
-            const symptoms = Array.from(selectedOptions).map(option => option.value);
-            const response = await fetch('/predict_symptoms', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ symptoms: symptoms })
+        function renderSymptoms(symptoms) {
+            const grid = document.getElementById('symptoms-grid');
+            grid.innerHTML = '';
+            
+            symptoms.forEach(symptom => {
+                const symptomCard = document.createElement('div');
+                symptomCard.className = 'symptom-card';
+                symptomCard.innerHTML = `
+                    <input type="checkbox" id="symptom-${symptom.value}" value="${symptom.value}" class="symptom-checkbox">
+                    <label for="symptom-${symptom.value}" class="symptom-label">
+                        <span class="symptom-text">${symptom.display}</span>
+                        <span class="checkmark">✓</span>
+                    </label>
+                `;
+                grid.appendChild(symptomCard);
             });
-            const result = await response.json();
-            const resultContainer = document.getElementById('result-container');
-            const resultText = document.getElementById('result-text');
-            resultText.textContent = result.predicted_disease || `Error: ${result.error}`;
-            resultContainer.style.display = 'block';
-        });
+        }
+
+        function setupEventListeners() {
+            // Search functionality
+            const searchInput = document.getElementById('symptom-search');
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const symptomCards = document.querySelectorAll('.symptom-card');
+                
+                symptomCards.forEach(card => {
+                    const symptomText = card.querySelector('.symptom-text').textContent.toLowerCase();
+                    if (symptomText.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+
+            // Checkbox change events
+            document.addEventListener('change', (e) => {
+                if (e.target.classList.contains('symptom-checkbox')) {
+                    const value = e.target.value;
+                    if (e.target.checked) {
+                        selectedSymptoms.add(value);
+                    } else {
+                        selectedSymptoms.delete(value);
+                    }
+                    updateUI();
+                }
+            });
+
+            // Clear all button
+            document.getElementById('clear-all').addEventListener('click', () => {
+                selectedSymptoms.clear();
+                document.querySelectorAll('.symptom-checkbox').forEach(cb => cb.checked = false);
+                updateUI();
+            });
+
+            // Form submission
+            document.getElementById('symptom-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (selectedSymptoms.size === 0) return;
+
+                const submitBtn = document.querySelector('.btn-predict');
+                submitBtn.textContent = 'Predicting...';
+                submitBtn.disabled = true;
+
+                try {
+                    const response = await fetch('/predict_symptoms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ symptoms: Array.from(selectedSymptoms) })
+                    });
+                    const result = await response.json();
+                    
+                    const resultContainer = document.getElementById('result-container');
+                    const resultText = document.getElementById('result-text');
+                    resultText.textContent = result.predicted_disease || `Error: ${result.error}`;
+                    resultContainer.style.display = 'block';
+                    
+                    // Scroll to result
+                    resultContainer.scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while predicting. Please try again.');
+                } finally {
+                    submitBtn.textContent = 'Predict Disease';
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // New prediction button
+            document.getElementById('new-prediction').addEventListener('click', () => {
+                selectedSymptoms.clear();
+                document.querySelectorAll('.symptom-checkbox').forEach(cb => cb.checked = false);
+                document.getElementById('result-container').style.display = 'none';
+                document.getElementById('symptom-search').value = '';
+                document.querySelectorAll('.symptom-card').forEach(card => card.style.display = 'block');
+                updateUI();
+            });
+        }
+
+        function updateUI() {
+            const count = selectedSymptoms.size;
+            document.getElementById('selected-count').textContent = count;
+            document.querySelector('.btn-predict').disabled = count === 0;
+        }
     </script>
 </body>
 </html>
