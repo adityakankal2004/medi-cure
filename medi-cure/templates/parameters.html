@@ -17,19 +17,19 @@
         <div class="form-container">
             <div class="validation-info">
                 <h3>📋 Input Guidelines</h3>
-                <p>Enter the medical parameters you have available. All fields are optional, but provide realistic values within the specified ranges for better predictions.</p>
+                <p>Enter the medical parameters you have available. <strong>Sex and Age are required</strong>, and you need to provide at least 2 additional medical parameters for accurate prediction.</p>
             </div>
             
             <form id="parameter-form">
                 <div class="grid-form" id="dynamic-form-fields">
-                    <div class="form-group">
-                        <label for="sex">Sex:</label>
-                        <select id="sex" name="sex" required>
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
+        <div class="form-group">
+            <label for="sex">Sex: <span class="required">*</span></label>
+            <select id="sex" name="sex" required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
                 </div>
                 
                 <div class="form-actions">
@@ -178,10 +178,29 @@
                 }
             });
             
-            // Check if at least one field is filled
-            const filledInputs = Array.from(inputs).filter(input => input.value.trim() !== '');
-            if (filledInputs.length === 0) {
-                alert('Please enter at least one medical parameter for prediction.');
+            // Check if sex is provided
+            const sexSelect = document.getElementById('sex');
+            if (!sexSelect.value) {
+                alert('Sex is required for prediction.');
+                return;
+            }
+            
+            // Check if age is provided
+            const ageInput = document.getElementById('age');
+            if (!ageInput.value) {
+                alert('Age is required for prediction.');
+                return;
+            }
+            
+            // Check if at least 2 additional parameters are provided
+            const additionalParams = ['bloodpressure', 'cholesterol', 'maxheartrate', 'glucose', 'bmi', 'albumin', 'bilirubin', 'alamine_alt', 'copper', 'stage', 'specificgravity', 'hemoglobin'];
+            const filledAdditionalParams = additionalParams.filter(param => {
+                const input = document.getElementById(param);
+                return input && input.value.trim() !== '';
+            });
+            
+            if (filledAdditionalParams.length < 2) {
+                alert('Please provide at least 2 additional medical parameters for accurate prediction.');
                 return;
             }
             

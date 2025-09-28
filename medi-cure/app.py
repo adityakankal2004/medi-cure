@@ -134,10 +134,41 @@ def predict_parameters():
         # Validate input data
         validation_errors = []
         
-        # Check if sex is provided (optional) - only validate if provided
+        # Check if sex is provided (required)
         sex_value = data_lower.get('sex')
-        if sex_value and sex_value not in ['male', 'female']:
-            validation_errors.append("Sex must be 'Male' or 'Female'")
+        if not sex_value or sex_value not in ['male', 'female']:
+            validation_errors.append("Sex is required and must be 'Male' or 'Female'")
+        
+        # Check if age is provided (required)
+        age_value = data_lower.get('age')
+        if not age_value or age_value == '' or age_value == 'None':
+            validation_errors.append("Age is required")
+        else:
+            try:
+                age_num = float(age_value)
+                if age_num < 0 or age_num > 120:
+                    validation_errors.append("Age must be between 0 and 120")
+            except (ValueError, TypeError):
+                validation_errors.append("Age must be a valid number")
+        
+        # Count how many additional parameters are provided
+        additional_params_count = 0
+        for col in model_columns:
+            if col == 'Sex' or col == 'Age':
+                continue
+            
+            # Handle case sensitivity for Alamine_ALT
+            col_key = col.lower()
+            if col == 'Alamine_ALT':
+                col_key = 'alamine_alt'
+            
+            value = data_lower.get(col_key)
+            if value is not None and value != '' and value != 'None':
+                additional_params_count += 1
+        
+        # Require at least 2 additional parameters (besides sex and age)
+        if additional_params_count < 2:
+            validation_errors.append("Please provide at least 2 additional medical parameters for accurate prediction")
         
         # Validate numeric parameters (only if provided)
         for col in model_columns:
