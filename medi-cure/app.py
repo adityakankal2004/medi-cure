@@ -30,20 +30,15 @@ except FileNotFoundError as e:
 
 # Load Symptoms Model (REVISED FOR DIAGNOSTICS)
 try:
-    symptoms_model = joblib.load('svc.pkl')
-    symptoms_encoder = joblib.load('le.pkl')
-    
-    # Load dataset to get symptom columns
-    symptoms_df = pd.read_csv('dataset.csv')
+    symptoms_model = joblib.load('analyse/symptom_disease_model.pkl')
+    symptoms_encoder = joblib.load('analyse/symptom_disease_encoder.pkl')
+    symptom_columns = joblib.load('analyse/symptoms_list.pkl')
     
     # --- Data Cleaning and Diagnostic Step ---
     # 1. Clean up column names to remove extra spaces or hidden characters
-    symptoms_df.columns = symptoms_df.columns.str.strip()
+    symptom_columns = [col.strip() for col in symptom_columns]
     
-    # 2. Create the list of symptoms, explicitly removing the disease column
-    symptom_columns = [col for col in symptoms_df.columns if 'Disease' not in col and 'Unnamed' not in col]
-    
-    # 3. THIS IS THE IMPORTANT DIAGNOSTIC STEP: Print the list to the terminal
+    # 2. THIS IS THE IMPORTANT DIAGNOSTIC STEP: Print the list to the terminal
     print("--- SYMPTOMS LIST LOADED ---")
     print(symptom_columns)
     print(f"Total symptoms found: {len(symptom_columns)}")
