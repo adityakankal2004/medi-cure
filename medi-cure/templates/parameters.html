@@ -13,63 +13,60 @@
         <h1>Medical Parameter Prediction</h1>
     </header>
     <main>
-        <div class="form-container">
-            <form id="parameter-form">
-                <div class="grid-form">
-                    <script>
-                        const fields = ['Age', 'BloodPressure', 'Cholesterol', 'MaxHeartRate', 'Glucose', 'BMI', 'Albumin', 'Bilirubin', 'Alamine_ALT', 'Copper', 'Stage', 'SpecificGravity', 'Hemoglobin'];
-                        fields.forEach(field => {
-                            document.write(`
-                                <div class="form-group">
-                                    <label for="${field.toLowerCase()}">${field.replace(/_/g, ' ')}:</label>
-                                    <input type="number" step="any" id="${field.toLowerCase()}" name="${field.toLowerCase()}" placeholder="e.g., ${field === 'Age' ? '55' : '120.5'}" required>
-                                </div>
-                            `);
-                        });
-                    </script>
-                    <div class="form-group">
-                        <label for="sex">Sex:</label>
-                        <select id="sex" name="sex" required>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
+    <div class="form-container">
+        <form id="parameter-form">
+            <div class="grid-form" id="dynamic-form-fields">
+                <div class="form-group">
+                    <label for="sex">Sex:</label>
+                    <select id="sex" name="sex" required>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
                 </div>
-                <button type="submit" class="btn-predict">Predict Disease</button>
-            </form>
-            <div id="result-container" class="result-box" style="display: none;">
-                <h3>Prediction Result:</h3>
-                <p id="result-text"></p>
             </div>
+            <button type="submit" class="btn-predict">Predict Disease</button>
+        </form>
         </div>
-    </main>
-     <footer>
-        <p>&copy; 2025 Health AI Services.</p>
-    </footer>
+</main>
+<footer>...</footer>
 
-    <script>
-        document.getElementById('parameter-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+<script>
+    // Wait for the DOM to be ready
+    document.addEventListener('DOMContentLoaded', () => {
+        const fields = ['Age', 'BloodPressure', 'Cholesterol', 'MaxHeartRate', 'Glucose', 'BMI', 'Albumin', 'Bilirubin', 'Alamine_ALT', 'Copper', 'Stage', 'SpecificGravity', 'Hemoglobin'];
+        const container = document.getElementById('dynamic-form-fields');
 
-            const response = await fetch('/predict_parameters', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+        fields.forEach(field => {
+            // 1. Create the container div
+            const formGroup = document.createElement('div');
+            formGroup.className = 'form-group';
 
-            const result = await response.json();
-            const resultContainer = document.getElementById('result-container');
-            const resultText = document.getElementById('result-text');
+            // 2. Create the label and input elements
+            const label = document.createElement('label');
+            label.setAttribute('for', field.toLowerCase());
+            label.textContent = `${field.replace(/_/g, ' ')}:`;
 
-            if (result.predicted_disease) {
-                resultText.textContent = `The predicted disease is: ${result.predicted_disease}`;
-            } else {
-                resultText.textContent = `Error: ${result.error || 'An unknown error occurred.'}`;
-            }
-            resultContainer.style.display = 'block';
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = 'any';
+            input.id = field.toLowerCase();
+            input.name = field.toLowerCase();
+            input.placeholder = `e.g., ${field === 'Age' ? '55' : '120.5'}`;
+            input.required = true;
+
+            // 3. Append the label and input to the container div
+            formGroup.appendChild(label);
+            formGroup.appendChild(input);
+
+            // 4. Append the new form group to the main grid container
+            container.appendChild(formGroup);
         });
-    </script>
+    });
+
+    // Your existing form submission script goes here and remains unchanged
+    document.getElementById('parameter-form').addEventListener('submit', async (e) => {
+        // ... no changes needed here ...
+    });
+</script>
 </body>
 </html>

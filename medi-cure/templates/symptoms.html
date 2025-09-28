@@ -2,10 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Predict by Symptoms</title>
+    <title>Symptom Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
@@ -15,77 +13,50 @@
     <main>
         <div class="form-container">
             <form id="symptom-form">
-                <div class="form-group">
-                    <label for="symptoms-select">Select Your Symptoms (you can select multiple):</label>
-                    
-                    <select id="symptoms-select" multiple required></select>
-                       
-
-                </div>
+                <label for="symptoms-select">Select Your Symptoms (Ctrl+Click for multiple):</label>
+                <select id="symptoms-select" multiple required></select>
                 <button type="submit" class="btn-predict">Predict Disease</button>
             </form>
             <div id="result-container" class="result-box" style="display: none;">
-                <h3>Prediction Result:</h3>
+                <h3>Prediction:</h3>
                 <p id="result-text"></p>
             </div>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2025 Health AI Services.</p>
-    </footer>
-
     <script>
-    // This is the crucial part. It tells the browser to wait until the
-    // entire HTML page is loaded before running the code inside.
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const response = await fetch('/get_symptoms');
-            const data = await response.json();
-            
-            console.log("Data received from server:", data);
-
-            // This line looks for the HTML dropdown box.
-            const selectElement = document.getElementById('symptoms-select');
-
-            // The check below ensures the dropdown was found AND the symptom list has data.
-            if (selectElement && data.symptoms && data.symptoms.length > 0) {
-                data.symptoms.forEach(symptom => {
-                    const option = document.createElement('option');
-                    option.value = symptom;
-                    option.textContent = symptom.replace(/_/g, ' '); 
-                    selectElement.appendChild(option); // This is where the error was happening.
-                });
-            } else {
-                console.error('Could not find the <select> element or the symptoms list was empty.');
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/get_symptoms');
+                const data = await response.json();
+                const selectElement = document.getElementById('symptoms-select');
+                if (selectElement && data.symptoms) {
+                    data.symptoms.forEach(symptom => {
+                        const option = document.createElement('option');
+                        option.value = symptom;
+                        option.textContent = symptom.replace(/_/g, ' ');
+                        selectElement.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching symptoms:', error);
             }
-        } catch (error) {
-            console.error('Error fetching or processing symptoms:', error);
-        }
-    });
-
-    // The code for handling the form submission remains the same.
-    document.getElementById('symptom-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const selectedOptions = document.getElementById('symptoms-select').selectedOptions;
-        const symptoms = Array.from(selectedOptions).map(option => option.value);
-
-        const response = await fetch('/predict_symptoms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ symptoms: symptoms })
         });
 
-        const result = await response.json();
-        const resultContainer = document.getElementById('result-container');
-        const resultText = document.getElementById('result-text');
-
-        if (result.predicted_disease) {
-            resultText.textContent = `The predicted disease is: ${result.predicted_disease}`;
-        } else {
-            resultText.textContent = `Error: ${result.error || 'An unknown error occurred.'}`;
-        }
-        resultContainer.style.display = 'block';
-    });
-</script>
+        document.getElementById('symptom-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const selectedOptions = document.getElementById('symptoms-select').selectedOptions;
+            const symptoms = Array.from(selectedOptions).map(option => option.value);
+            const response = await fetch('/predict_symptoms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symptoms: symptoms })
+            });
+            const result = await response.json();
+            const resultContainer = document.getElementById('result-container');
+            const resultText = document.getElementById('result-text');
+            resultText.textContent = result.predicted_disease || `Error: ${result.error}`;
+            resultContainer.style.display = 'block';
+        });
+    </script>
 </body>
 </html>
