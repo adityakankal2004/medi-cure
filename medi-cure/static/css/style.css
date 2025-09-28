@@ -376,7 +376,98 @@ footer {
     font-weight: 500;
 }
 
-/* --- Responsive Design --- */
+/* --- Medical Parameters Validation Styles --- */
+.validation-info {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.validation-info h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.validation-info p {
+    color: var(--text-color);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.validation-message {
+    font-size: 0.8rem;
+    color: var(--medium-gray);
+    margin-top: 0.3rem;
+    transition: var(--transition);
+    min-height: 1.2rem;
+}
+
+.validation-message.error {
+    color: var(--danger-color);
+    font-weight: 500;
+}
+
+.form-group input.error {
+    border-color: var(--danger-color);
+    background-color: #ffebee;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group input:focus.error {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+/* Enhanced form styling */
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
+    background-color: var(--surface-color);
+}
+
+.form-group input:hover, .form-group select:hover {
+    border-color: var(--primary-color);
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+/* Parameter-specific styling */
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .choice-wrapper {
         flex-direction: column;
@@ -402,6 +493,18 @@ footer {
     .result-content {
         flex-direction: column;
         text-align: center;
+    }
+    
+    .validation-info {
+        padding: 0.8rem;
+    }
+    
+    .validation-info h3 {
+        font-size: 1rem;
+    }
+    
+    .validation-info p {
+        font-size: 0.85rem;
     }
 }
 

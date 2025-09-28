@@ -106,22 +106,94 @@ def predict_parameters():
         data = request.get_json(force=True)
         data_lower = {k.lower(): v for k, v in data.items()}
         
+        # Debug logging
+        logging.info(f"Received data: {data}")
+        logging.info(f"Processed data: {data_lower}")
+        
+        # Convert sex to lowercase for validation
+        if 'sex' in data_lower and data_lower['sex']:
+            data_lower['sex'] = data_lower['sex'].lower()
+        
+        # Validation ranges for medical parameters
+        validation_ranges = {
+            'age': (0, 120),
+            'bloodpressure': (50, 250),
+            'cholesterol': (100, 500),
+            'maxheartrate': (40, 220),
+            'glucose': (50, 500),
+            'bmi': (10, 80),
+            'albumin': (1.0, 6.0),
+            'bilirubin': (0.1, 20.0),
+            'alamine_alt': (5, 500),
+            'copper': (10, 200),
+            'stage': (1, 5),
+            'specificgravity': (1.000, 1.040),
+            'hemoglobin': (5, 25)
+        }
+        
+        # Validate input data
+        validation_errors = []
+        
+        # Check if sex is provided (optional) - only validate if provided
+        sex_value = data_lower.get('sex')
+        if sex_value and sex_value not in ['male', 'female']:
+            validation_errors.append("Sex must be 'Male' or 'Female'")
+        
+        # Validate numeric parameters (only if provided)
+        for col in model_columns:
+            if col == 'Sex':
+                continue
+                
+            # Handle case sensitivity for Alamine_ALT
+            col_key = col.lower()
+            if col == 'Alamine_ALT':
+                col_key = 'alamine_alt'
+                
+            value = data_lower.get(col_key)
+            if value is None or value == '' or value == 'None':
+                continue  # Skip validation for empty fields
+                
+            try:
+                num_value = float(value)
+                min_val, max_val = validation_ranges[col_key]
+                
+                if num_value < min_val or num_value > max_val:
+                    validation_errors.append(f"{col} must be between {min_val} and {max_val}")
+                    
+            except (ValueError, TypeError):
+                validation_errors.append(f"{col} must be a valid number")
+        
+        if validation_errors:
+            logging.info(f"Validation errors: {validation_errors}")
+            return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
+        
+        # Process validated data with imputation for missing values
         input_values = []
         for col in model_columns:
             if col == 'Sex':
-                sex_value = 1 if data_lower.get('sex') == 'Male' else 0
+                # Default to 0 (Female) if not provided
+                sex_value = 1 if data_lower.get('sex') == 'male' else 0
                 input_values.append(sex_value)
             else:
-                value = data_lower.get(col.lower())
-                input_values.append(float(value) if value else np.nan)
+                # Handle case sensitivity for Alamine_ALT
+                col_key = col.lower()
+                if col == 'Alamine_ALT':
+                    col_key = 'alamine_alt'
+                    
+                value = data_lower.get(col_key)
+                if value is None or value == '' or value == 'None':
+                    input_values.append(np.nan)  # Use NaN for missing values
+                else:
+                    input_values.append(float(value))
 
         df = pd.DataFrame([input_values], columns=model_columns)
         
-        # Simple imputation for any missing values
+        # Impute missing values with mean for numeric columns
         for col in df.columns:
             if pd.api.types.is_numeric_dtype(df[col]):
                 df[col].fillna(df[col].mean(), inplace=True)
         
+        # Make prediction
         prediction_encoded = params_model.predict(df)
         predicted_disease = params_encoder.inverse_transform(prediction_encoded)
         

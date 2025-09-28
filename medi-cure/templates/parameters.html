@@ -3,70 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Predict by Medical Parameters</title>
+    <title>Medical Parameter Prediction</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <a href="/" class="back-link">&larr; Back to Home</a>
         <h1>Medical Parameter Prediction</h1>
+        <p class="header-subtitle">Enter your medical parameters to get a disease prediction</p>
     </header>
     <main>
-    <div class="form-container">
-        <form id="parameter-form">
-            <div class="grid-form" id="dynamic-form-fields">
-                <div class="form-group">
-                    <label for="sex">Sex:</label>
-                    <select id="sex" name="sex" required>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
+        <div class="form-container">
+            <div class="validation-info">
+                <h3>📋 Input Guidelines</h3>
+                <p>Enter the medical parameters you have available. All fields are optional, but provide realistic values within the specified ranges for better predictions.</p>
             </div>
-            <button type="submit" class="btn-predict">Predict Disease</button>
-        </form>
+            
+            <form id="parameter-form">
+                <div class="grid-form" id="dynamic-form-fields">
+                    <div class="form-group">
+                        <label for="sex">Sex:</label>
+                        <select id="sex" name="sex" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="clear-form" class="btn-secondary">Clear Form</button>
+                    <button type="submit" class="btn-predict">Predict Disease</button>
+                </div>
+            </form>
+            
+            <div id="result-container" class="result-box" style="display: none;">
+                <h3>Prediction Result</h3>
+                <div class="result-content">
+                    <div class="disease-icon">🏥</div>
+                    <p id="result-text"></p>
+                </div>
+                <button type="button" id="new-prediction" class="btn-secondary">New Prediction</button>
+            </div>
         </div>
-</main>
-<footer>...</footer>
+    </main>
 
 <script>
+    // Medical parameter validation ranges
+    const validationRanges = {
+        'age': { min: 0, max: 120, unit: 'years', description: 'Age in years' },
+        'bloodpressure': { min: 50, max: 250, unit: 'mmHg', description: 'Systolic blood pressure' },
+        'cholesterol': { min: 100, max: 500, unit: 'mg/dL', description: 'Total cholesterol level' },
+        'maxheartrate': { min: 40, max: 220, unit: 'bpm', description: 'Maximum heart rate' },
+        'glucose': { min: 50, max: 500, unit: 'mg/dL', description: 'Blood glucose level' },
+        'bmi': { min: 10, max: 80, unit: 'kg/m²', description: 'Body Mass Index' },
+        'albumin': { min: 1.0, max: 6.0, unit: 'g/dL', description: 'Serum albumin level' },
+        'bilirubin': { min: 0.1, max: 20.0, unit: 'mg/dL', description: 'Total bilirubin level' },
+        'alamine_alt': { min: 5, max: 500, unit: 'U/L', description: 'Alanine aminotransferase' },
+        'copper': { min: 10, max: 200, unit: 'μg/dL', description: 'Serum copper level' },
+        'stage': { min: 1, max: 5, unit: '', description: 'Disease stage (1-5)' },
+        'specificgravity': { min: 1.000, max: 1.040, unit: '', description: 'Urine specific gravity' },
+        'hemoglobin': { min: 5, max: 25, unit: 'g/dL', description: 'Hemoglobin level' }
+    };
+
     // Wait for the DOM to be ready
     document.addEventListener('DOMContentLoaded', () => {
         const fields = ['Age', 'BloodPressure', 'Cholesterol', 'MaxHeartRate', 'Glucose', 'BMI', 'Albumin', 'Bilirubin', 'Alamine_ALT', 'Copper', 'Stage', 'SpecificGravity', 'Hemoglobin'];
         const container = document.getElementById('dynamic-form-fields');
 
         fields.forEach(field => {
+            const fieldKey = field.toLowerCase();
+            const range = validationRanges[fieldKey];
+            
             // 1. Create the container div
             const formGroup = document.createElement('div');
             formGroup.className = 'form-group';
 
-            // 2. Create the label and input elements
+            // 2. Create the label
             const label = document.createElement('label');
-            label.setAttribute('for', field.toLowerCase());
+            label.setAttribute('for', fieldKey);
             label.textContent = `${field.replace(/_/g, ' ')}:`;
-
+            
+            // 3. Create the input element with validation
             const input = document.createElement('input');
             input.type = 'number';
-            input.step = 'any';
-            input.id = field.toLowerCase();
-            input.name = field.toLowerCase();
-            input.placeholder = `e.g., ${field === 'Age' ? '55' : '120.5'}`;
-            input.required = true;
+            input.step = fieldKey === 'specificgravity' ? '0.001' : '0.1';
+            input.id = fieldKey;
+            input.name = fieldKey;
+            input.min = range.min;
+            input.max = range.max;
+            input.placeholder = `Optional: ${range.min}-${range.max} ${range.unit}`;
+            input.required = false;
+            
+            // 4. Create validation message element
+            const validationMsg = document.createElement('div');
+            validationMsg.className = 'validation-message';
+            validationMsg.textContent = `Optional: ${range.description} (${range.min}-${range.max} ${range.unit})`;
+            
+            // 5. Add real-time validation
+            input.addEventListener('input', () => validateInput(input, range, validationMsg));
+            input.addEventListener('blur', () => validateInput(input, range, validationMsg));
 
-            // 3. Append the label and input to the container div
+            // 6. Append elements to form group
             formGroup.appendChild(label);
             formGroup.appendChild(input);
+            formGroup.appendChild(validationMsg);
 
-            // 4. Append the new form group to the main grid container
+            // 7. Append the new form group to the main grid container
             container.appendChild(formGroup);
         });
+        
+        setupFormEventListeners();
     });
 
-    // Your existing form submission script goes here and remains unchanged
-    document.getElementById('parameter-form').addEventListener('submit', async (e) => {
-        // ... no changes needed here ...
-    });
+    function validateInput(input, range, validationMsg) {
+        const value = input.value.trim();
+        const fieldName = input.name.replace(/_/g, ' ');
+        
+        // If field is empty, it's valid (optional field)
+        if (value === '') {
+            clearError(input, validationMsg);
+            return true;
+        }
+        
+        const numValue = parseFloat(value);
+        
+        // Check if it's a valid number
+        if (isNaN(numValue)) {
+            showError(input, validationMsg, `Please enter a valid number for ${fieldName}`);
+            return false;
+        }
+        
+        // Check if it's within range
+        if (numValue < range.min || numValue > range.max) {
+            showError(input, validationMsg, `${fieldName} must be between ${range.min} and ${range.max} ${range.unit}`);
+            return false;
+        }
+        
+        clearError(input, validationMsg);
+        return true;
+    }
+
+    function showError(input, validationMsg, message) {
+        input.classList.add('error');
+        validationMsg.classList.add('error');
+        validationMsg.textContent = message;
+    }
+
+    function clearError(input, validationMsg) {
+        input.classList.remove('error');
+        validationMsg.classList.remove('error');
+        const fieldKey = input.name;
+        const range = validationRanges[fieldKey];
+        validationMsg.textContent = `Optional: ${range.description} (${range.min}-${range.max} ${range.unit})`;
+    }
+
+    function setupFormEventListeners() {
+        // Form submission
+        document.getElementById('parameter-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate only filled inputs
+            const inputs = document.querySelectorAll('input[type="number"]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                const fieldKey = input.name;
+                const range = validationRanges[fieldKey];
+                const validationMsg = input.parentNode.querySelector('.validation-message');
+                
+                if (!validateInput(input, range, validationMsg)) {
+                    isValid = false;
+                }
+            });
+            
+            // Check if at least one field is filled
+            const filledInputs = Array.from(inputs).filter(input => input.value.trim() !== '');
+            if (filledInputs.length === 0) {
+                alert('Please enter at least one medical parameter for prediction.');
+                return;
+            }
+            
+            if (!isValid) {
+                alert('Please correct the highlighted errors before submitting.');
+                return;
+            }
+            
+            // Collect form data
+            const formData = new FormData(document.getElementById('parameter-form'));
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert numeric values
+            Object.keys(data).forEach(key => {
+                if (key !== 'sex') {
+                    data[key] = parseFloat(data[key]);
+                }
+            });
+            
+            // Show loading state
+            const submitBtn = document.querySelector('.btn-predict');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Predicting...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/predict_parameters', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                const resultContainer = document.getElementById('result-container');
+                const resultText = document.getElementById('result-text');
+                resultText.textContent = result.predicted_disease || `Error: ${result.error}`;
+                resultContainer.style.display = 'block';
+                
+                // Scroll to result
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while predicting. Please try again.');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Clear form button
+        document.getElementById('clear-form').addEventListener('click', () => {
+            document.getElementById('parameter-form').reset();
+            document.querySelectorAll('.validation-message').forEach(msg => {
+                msg.classList.remove('error');
+                const fieldKey = msg.previousElementSibling.name;
+                const range = validationRanges[fieldKey];
+                msg.textContent = `Optional: ${range.description} (${range.min}-${range.max} ${range.unit})`;
+            });
+            document.querySelectorAll('input').forEach(input => input.classList.remove('error'));
+            document.getElementById('result-container').style.display = 'none';
+        });
+        
+        // New prediction button
+        document.getElementById('new-prediction').addEventListener('click', () => {
+            document.getElementById('parameter-form').reset();
+            document.querySelectorAll('.validation-message').forEach(msg => {
+                msg.classList.remove('error');
+                const fieldKey = msg.previousElementSibling.name;
+                const range = validationRanges[fieldKey];
+                msg.textContent = `Optional: ${range.description} (${range.min}-${range.max} ${range.unit})`;
+            });
+            document.querySelectorAll('input').forEach(input => input.classList.remove('error'));
+            document.getElementById('result-container').style.display = 'none';
+        });
+    }
 </script>
 </body>
 </html>
